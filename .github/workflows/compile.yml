@@ -50,5 +50,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: v5u-android
-          path: android/app/build/outputs/apk/debug/*
-          .apk
+          path: android/app/build/outputs/apk/debug/*.apk
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libglew-dev libglfw3-dev libsdl2-dev libogg-dev libtheora-dev libvorbis-dev
+      - name: Build
+        run: |
+          cmake -B build ${{env.GENERAL_FLAGS}}
+          cmake --build build --parallel
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5u-linux
+          path: build/RSDKv5*
