@@ -1,0 +1,54 @@
+name: Build RSDKv5u
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+env:
+  GENERAL_FLAGS: "-DRETRO_REVISION=3 -DCMAKE_BUILD_TYPE=Release"
+  GENERAL_WIN_FLAGS: "-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  WIN64_FLAGS: "-DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_PREFIX_PATH=C:/vcpkg/installed/x64-windows-static/"
+
+jobs:
+  windows-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: vcpkg install glew sdl2 libogg libtheora libvorbis --triplet=x64-windows-static
+      - name: Build
+        run: |
+          cmake -B build ${{env.GENERAL_FLAGS}} ${{env.GENERAL_WIN_FLAGS}} ${{env.WIN64_FLAGS}}
+          cmake --build build --parallel --config Release
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5u-windows-x64
+          path: build/Release/*.exe
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Build Android
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug -DRETRO_REVISION=3
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5u-android
+          path: android/app/build/outputs/apk/debug/*
+          .apk
